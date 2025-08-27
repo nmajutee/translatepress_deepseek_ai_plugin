@@ -54,7 +54,7 @@ class TRP_Translate_Press{
         define( 'TRP_PLUGIN_SLUG', 'translatepress-multilingual' );
         define( 'TRP_PLUGIN_VERSION', '1.6.1' );
 
-	    wp_cache_add_non_persistent_groups(array('trp'));
+        wp_cache_add_non_persistent_groups(array('trp'));
 
         $this->load_dependencies();
         $this->initialize_components();
@@ -93,7 +93,7 @@ class TRP_Translate_Press{
         require_once TRP_PLUGIN_DIR . 'includes/class-query.php';
         require_once TRP_PLUGIN_DIR . 'includes/class-url-converter.php';
         require_once TRP_PLUGIN_DIR . 'includes/class-uri.php';
-	    require_once TRP_PLUGIN_DIR . 'includes/class-upgrade.php';
+        require_once TRP_PLUGIN_DIR . 'includes/class-upgrade.php';
         require_once TRP_PLUGIN_DIR . 'includes/class-plugin-notices.php';
         require_once TRP_PLUGIN_DIR . 'includes/class-advanced-tab.php';
         require_once TRP_PLUGIN_DIR . 'includes/class-translation-memory.php';
@@ -104,6 +104,12 @@ class TRP_Translate_Press{
         require_once TRP_PLUGIN_DIR . 'assets/lib/simplehtmldom/simple_html_dom.php';
         require_once TRP_PLUGIN_DIR . 'includes/shortcodes.php';
         require_once TRP_PLUGIN_DIR . 'includes/class-machine-translation-tab.php';
+
+        // New files for Deep Seek engine and page caching/loader
+        // Make sure these files exist in the specified paths
+        require_once TRP_PLUGIN_DIR . 'includes/deepseek/class-deepseek-machine-translator.php';
+        require_once TRP_PLUGIN_DIR . 'includes/class-translated-pages-cache.php';
+        require_once TRP_PLUGIN_DIR . 'includes/front-translation-cache-loader.php';
     }
 
     /**
@@ -177,11 +183,11 @@ class TRP_Translate_Press{
         $this->loader->add_action( 'trp_settings_navigation_tabs', $this->settings, 'add_navigation_tabs' );
         $this->loader->add_action( 'trp_language_selector', $this->settings, 'languages_selector', 10, 1 );
 
-	    $this->loader->add_action( 'trp_settings_tabs', $this->advanced_tab, 'add_advanced_tab_to_settings', 10, 1 );
-	    $this->loader->add_action( 'admin_menu', $this->advanced_tab, 'add_submenu_page_advanced' );
-	    $this->loader->add_action( 'trp_output_advanced_settings_options', $this->advanced_tab, 'output_advanced_options' );
-	    $this->loader->add_action( 'admin_init', $this->advanced_tab, 'register_setting' );
-	    $this->loader->add_action( 'admin_notices', $this->advanced_tab, 'admin_notices' );
+        $this->loader->add_action( 'trp_settings_tabs', $this->advanced_tab, 'add_advanced_tab_to_settings', 10, 1 );
+        $this->loader->add_action( 'admin_menu', $this->advanced_tab, 'add_submenu_page_advanced' );
+        $this->loader->add_action( 'trp_output_advanced_settings_options', $this->advanced_tab, 'output_advanced_options' );
+        $this->loader->add_action( 'admin_init', $this->advanced_tab, 'register_setting' );
+        $this->loader->add_action( 'admin_notices', $this->advanced_tab, 'admin_notices' );
 
         //Machine Translation tab
         $this->loader->add_action( 'trp_settings_tabs', $this->machine_translation_tab, 'add_tab_to_navigation', 10, 1 );
@@ -201,27 +207,27 @@ class TRP_Translate_Press{
 
         $this->loader->add_action( 'wp_ajax_nopriv_trp_get_translations_regular', $this->editor_api_regular_strings, 'get_translations' );
 
-	    $this->loader->add_action( 'wp_ajax_trp_get_translations_regular', $this->editor_api_regular_strings, 'get_translations' );
+        $this->loader->add_action( 'wp_ajax_trp_get_translations_regular', $this->editor_api_regular_strings, 'get_translations' );
         $this->loader->add_action( 'wp_ajax_trp_save_translations_regular', $this->editor_api_regular_strings, 'save_translations' );
         $this->loader->add_action( 'wp_ajax_trp_split_translation_block', $this->editor_api_regular_strings, 'split_translation_block' );
         $this->loader->add_action( 'wp_ajax_trp_create_translation_block', $this->editor_api_regular_strings, 'create_translation_block' );
 
-	    $this->loader->add_action( 'wp_ajax_trp_get_translations_gettext', $this->editor_api_gettext_strings, 'gettext_get_translations' );
-	    $this->loader->add_action( 'wp_ajax_trp_save_translations_gettext', $this->editor_api_gettext_strings, 'gettext_save_translations' );
+        $this->loader->add_action( 'wp_ajax_trp_get_translations_gettext', $this->editor_api_gettext_strings, 'gettext_get_translations' );
+        $this->loader->add_action( 'wp_ajax_trp_save_translations_gettext', $this->editor_api_gettext_strings, 'gettext_save_translations' );
 
         $this->loader->add_action( 'wp_ajax_trp_get_similar_string_translation', $this->translation_memory, 'ajax_get_similar_string_translation' );
 
-	    $this->loader->add_filter( 'trp_get_existing_translations', $this->translation_manager, 'display_possible_db_errors', 20, 3 );
+        $this->loader->add_filter( 'trp_get_existing_translations', $this->translation_manager, 'display_possible_db_errors', 20, 3 );
 
 
         $this->loader->add_action( 'wp_ajax_trp_process_js_strings_in_translation_editor', $this->translation_render, 'process_js_strings_in_translation_editor' );
         $this->loader->add_filter( 'trp_skip_selectors_from_dynamic_translation', $this->translation_render, 'skip_base_attributes_from_dynamic_translation', 10, 1 );
 
 
-	    $this->loader->add_action( 'admin_menu', $this->upgrade, 'register_menu_page' );
-	    $this->loader->add_action( 'admin_init', $this->upgrade, 'show_admin_notice' );
-	    $this->loader->add_action( 'admin_enqueue_scripts', $this->upgrade, 'enqueue_update_script', 10, 1 );
-	    $this->loader->add_action( 'wp_ajax_trp_update_database', $this->upgrade, 'trp_update_database' );
+        $this->loader->add_action( 'admin_menu', $this->upgrade, 'register_menu_page' );
+        $this->loader->add_action( 'admin_init', $this->upgrade, 'show_admin_notice' );
+        $this->loader->add_action( 'admin_enqueue_scripts', $this->upgrade, 'enqueue_update_script', 10, 1 );
+        $this->loader->add_action( 'wp_ajax_trp_update_database', $this->upgrade, 'trp_update_database' );
 
         /* add hooks for license operations  */
         if( !empty( $this->active_pro_addons ) ) {
@@ -299,69 +305,21 @@ class TRP_Translate_Press{
 
         /* we need to treat the date_i18n function differently so we remove the gettext wraps */
         $this->loader->add_filter( 'date_i18n', $this->translation_manager, 'handle_date_i18n_function_for_gettext', 1, 4 );
-	    /* strip esc_url() from gettext wraps */
-	    $this->loader->add_filter( 'clean_url', $this->translation_manager, 'trp_strip_gettext_tags_from_esc_url', 1, 3 );
-	    /* strip sanitize_title() from gettext wraps and apply custom trp_remove_accents */
-	    $this->loader->add_filter( 'sanitize_title', $this->translation_manager, 'trp_sanitize_title', 1, 3 );
+        /* strip esc_url() from gettext wraps */
+        $this->loader->add_filter( 'clean_url', $this->translation_manager, 'trp_strip_gettext_tags_from_esc_url', 1, 3 );
+        /* strip sanitize_title() from gettext wraps and apply custom trp_remove_accents */
+        $this->loader->add_filter( 'sanitize_title', $this->translation_manager, 'trp_sanitize_title', 1, 3 );
 
         /* define an update hook here */
         $this->loader->add_action( 'plugins_loaded', $this->upgrade, 'check_for_necessary_updates', 10 );
-
-        $this->loader->add_filter( 'trp_language_name', $this->languages, 'beautify_language_name', 10, 4 );
-        $this->loader->add_filter( 'trp_languages', $this->languages, 'reorder_languages', 10, 2 );
-
-        /* set up wp_mail hooks */
-        $this->loader->add_filter( 'wp_mail', $this->translation_render, 'wp_mail_filter', 1 );
-
-        /* hide php ors and notice when we are storing strings in db */
-        $this->loader->add_action( 'init', $this->translation_render, 'trp_debug_mode_off', 0 );
-
-        /* fix wptexturize to always replace with the default translated strings */
-        $this->loader->add_action( 'gettext_with_context', $this->translation_render, 'fix_wptexturize_characters', 999, 4 );
-
-        /* ?or init ? hook here where you can change the $current_user global */
-        $this->loader->add_action( 'init', $this->translation_manager, 'trp_view_as_user' );
-
-        /**
-         * we need to modify the permalinks structure for woocommerce when we switch languages
-         * when woo registers post_types and taxonomies in the rewrite parameter of the function they change the slugs of the items (they are localized with _x )
-         * we can't flush the permalinks on every page load so we filter the rewrite_rules option
-         */
-        $this->loader->add_filter( "option_rewrite_rules", $this->url_converter, 'woocommerce_filter_permalinks_on_other_languages' );
-        $this->loader->add_filter( "option_woocommerce_permalinks", $this->url_converter, 'woocommerce_filter_permalink_option' );
-        $this->loader->add_filter( "pre_update_option_woocommerce_permalinks", $this->url_converter, 'woocommerce_handle_permalink_option_on_frontend', 10, 2 );
-
-        /* add to the body class the current language */
-        $this->loader->add_filter( "body_class", $this->translation_manager, 'add_language_to_body_class' );
-
-        /* load textdomain */
-        $this->loader->add_action( "init", $this, 'init_translation', 8 );
-
-        // machine translation
-        $this->loader->add_action( 'plugins_loaded', $this, 'init_machine_translation', 10 );
     }
 
     /**
-     * Register hooks to WP.
+     * Run the loader (execute registered hooks).
      */
     public function run() {
-    	/*
-    	 * Hook that prevents running the hooks. Caution: some TP code like constructors of classes still run!
-    	 */
-    	$run_tp = apply_filters( 'trp_allow_tp_to_run', true );
-    	if ( $run_tp ) {
-		    $this->loader->run();
-	    }
-    }
-
-    /**
-     * Load plugin textdomain
-     */
-    public function init_translation(){
-        load_plugin_textdomain( 'translatepress-multilingual', false, basename(dirname(__FILE__)) . '/languages/' );
-    }
-
-    public function init_machine_translation(){
-        $this->machine_translator = $this->machine_translation_tab->get_active_engine();
+        if ( $this->loader ) {
+            $this->loader->run();
+        }
     }
 }
